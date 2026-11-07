@@ -1,0 +1,10 @@
+{
+  "name": "ampton",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Add up what's plugged into one wall socket or extension lead and see if it's within the 13-amp limit or heading for an overload. Runs in the browser, nothing uploaded. With Jack the plug.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
