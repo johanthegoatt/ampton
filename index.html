@@ -33,6 +33,13 @@
           <option value="16">16 A heavy-duty lead (~3,680 W)</option>
         </select>
       </label>
+      <label class="field">Cable reel
+        <select id="reel">
+          <option value="no">Not a reel, or fully unwound</option>
+          <option value="partly">Reel, only partly unwound</option>
+          <option value="fully">Reel, still wound up</option>
+        </select>
+      </label>
       <label class="check"><input type="checkbox" id="daisy"> This lead is plugged into another lead</label>
     </div>
 
@@ -48,6 +55,7 @@
     <h2>How it reads</h2>
     <p>A UK wall socket, plug fuse and most extension leads are rated <strong>13 amps</strong>, which at 230 volts is about <strong>3,000 watts</strong>. The catch is that a four-way lead is 13 amps for the <em>whole</em> lead, not per socket, so four plugs don't give you four times the power. Ampton adds the wattage of everything on the lead, converts it to amps, and shows how much of the rating you've used.</p>
     <p>High-power heating appliances — kettles, heaters, irons, washing machines, tumble dryers — each take a big share and run hot, so they're safest in a wall socket on their own rather than shared on a lead. And never plug one extension lead into another: all the current runs through the first lead's 13 amps.</p>
+    <p>A <strong>cable reel</strong> left wound up is a winter trap. Coiled on the drum the cable can't lose the heat it makes, so a reel that's safe at 3,000 watts unwound is safe at only around a third of that still wound — often near 1,000 watts, the figure printed on the drum. Always unwind a reel fully before running a heater or anything heavy. Set the reel state above and Ampton judges the load against the lower wound limit.</p>
     <p>Wattages shown are typical. The real figure is on the appliance's rating plate; type it in to be exact. Figures follow <a href="https://www.electricalsafetyfirst.org.uk/guidance/safety-around-the-home/overloading-sockets/" rel="noopener">Electrical Safety First</a>'s overloading-sockets guidance and the BS 1363 13-amp rating for UK plugs and sockets.</p>
     <p class="fineprint">Ampton is a guide for everyday appliances, not a substitute for an electrician. If a socket or plug feels hot, is scorched, or a breaker keeps tripping, stop using it and get it checked.</p>
   </section>

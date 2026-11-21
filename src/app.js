@@ -11,6 +11,7 @@
   var picker = $("picker");
   var leadEl = $("lead");
   var daisyEl = $("daisy");
+  var reelEl = $("reel");
   var out = $("out");
   var emptyEl = $("empty");
 
@@ -92,7 +93,8 @@
   function compute() {
     var leadAmps = Number(leadEl.value) || A.SOCKET_AMPS;
     var daisy = daisyEl.checked;
-    var r = A.assess({ items: items, leadAmps: leadAmps, daisyChained: daisy });
+    var coiled = reelEl ? reelEl.value : "no";
+    var r = A.assess({ items: items, leadAmps: leadAmps, daisyChained: daisy, coiled: coiled });
 
     var bar = Math.min(100, Math.round(r.fraction * 100));
     var barClass = r.status === "over" ? "over" : r.status === "tight" ? "tight" : "ok";
@@ -104,8 +106,10 @@
     var html = "";
     html += '<div class="gauge gauge--' + barClass + '">';
     html += '<div class="gauge__head"><strong>' + headline + '</strong>';
-    html += '<span>' + r.totalWatts + ' W of ' + Math.round(r.ratedWatts) + ' W · ' +
-            fmtAmps(r.totalAmps) + ' A of ' + r.ratedAmps + ' A</span></div>';
+    var limW = Math.round(r.safeWatts), limA = r.coiled === "no" ? r.ratedAmps : fmtAmps(r.safeAmps);
+    var reelTag = r.coiled === "no" ? "" : ' <em>(wound reel, derated from ' + Math.round(r.ratedWatts) + ' W)</em>';
+    html += '<span>' + r.totalWatts + ' W of ' + limW + ' W · ' +
+            fmtAmps(r.totalAmps) + ' A of ' + limA + ' A' + reelTag + '</span></div>';
     html += '<div class="gauge__track"><div class="gauge__fill" style="width:' +
             Math.max(2, bar) + '%"></div></div>';
     var hw = Math.round(r.headroomWatts);
@@ -144,6 +148,7 @@
       v: 1,
       lead: Number(leadEl.value) || A.SOCKET_AMPS,
       daisy: daisyEl.checked ? 1 : 0,
+      reel: reelEl ? reelEl.value : "no",
       items: items.map(function (it) { return [it.id, it.watts, it.qty]; })
     };
     try {
@@ -159,6 +164,7 @@
       if (!p || !Array.isArray(p.items)) return false;
       if (p.lead) leadEl.value = String(p.lead);
       daisyEl.checked = !!p.daisy;
+      if (reelEl && p.reel) reelEl.value = String(p.reel);
       items = [];
       p.items.forEach(function (row) {
         var id = row[0];
@@ -174,6 +180,7 @@
   });
   leadEl.addEventListener("change", compute);
   daisyEl.addEventListener("change", compute);
+  if (reelEl) reelEl.addEventListener("change", compute);
   $("clear").addEventListener("click", function () { items = []; render(); });
 
   $("share").addEventListener("click", function () {
