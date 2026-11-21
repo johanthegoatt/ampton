@@ -108,6 +108,26 @@
     var daisyChained = !!opts.daisyChained;
 
     var ratedWatts = ampsToWatts(leadAmps, volts);
+
+    // A coiled cable reel is the winter trap. Wound on the drum the cable can't
+    // shed the heat its own resistance makes, so a fully wound reel is safe at
+    // only a fraction of its unwound rating; leave it wound under a big load
+    // and the insulation can melt. The ICEA layered-ampacity figures the fire
+    // and mining services use derate a reeled cable to roughly 85% for one
+    // layer and about a third once several layers are on, which is why a 13 A
+    // (~3,000 W) reel typically prints a wound rating near 1,000 W. Ampton
+    // derates to the reel's own wound plate figure when you give it, else to a
+    // conservative third, and judges the load against that safe figure.
+    var WOUND_FACTOR = { no: 1, unwound: 1, partly: 0.6, fully: 0.33 };
+    var coiled = WOUND_FACTOR[opts.coiled] != null ? opts.coiled : "no";
+    var safeWatts = ratedWatts;
+    var safeAmps = leadAmps;
+    if (coiled === "partly" || coiled === "fully") {
+      var woundWatts = Number(opts.woundWatts);
+      safeWatts = (isFinite(woundWatts) && woundWatts > 0) ? woundWatts : ratedWatts * WOUND_FACTOR[coiled];
+      safeAmps = wattsToAmps(safeWatts, volts);
+    }
+
     var totalWatts = 0;
     var heatCount = 0;
     var biggest = null;
@@ -120,14 +140,17 @@
     });
 
     var totalAmps = wattsToAmps(totalWatts, volts);
-    var fraction = ratedWatts > 0 ? totalWatts / ratedWatts : 0;
-    var headroomWatts = ratedWatts - totalWatts;
-    var headroomAmps = leadAmps - totalAmps;
+    // Judge the load against the safe limit, which is the derated figure for a
+    // wound reel and the full plate rating otherwise (so an ordinary lead is
+    // unchanged).
+    var fraction = safeWatts > 0 ? totalWatts / safeWatts : 0;
+    var headroomWatts = safeWatts - totalWatts;
+    var headroomAmps = safeAmps - totalAmps;
 
-    // Status: over the rating is a fire risk; within ~10% is "tight" and worth
-    // moving something; otherwise there is comfortable headroom.
+    // Status: over the safe rating is a fire risk; within ~10% is "tight" and
+    // worth moving something; otherwise there is comfortable headroom.
     var status = "ok";
-    if (totalWatts > ratedWatts) status = "over";
+    if (totalWatts > safeWatts) status = "over";
     else if (fraction >= 0.9) status = "tight";
 
     var warnings = [];
@@ -157,6 +180,21 @@
       });
     }
 
+    // Coiled reel: warn to unwind it, and say how far the safe limit has
+    // dropped. A fully wound reel is the stronger warning; partly wound is a
+    // caution.
+    if (coiled === "fully") {
+      warnings.push({
+        level: "danger",
+        text: "This is a fully wound cable reel. Wound up, the cable can't lose its heat, so it is only safe to about " + Math.round(safeWatts) + " W, not the " + Math.round(ratedWatts) + " W on the plug. Unwind the cable fully before running anything heavy."
+      });
+    } else if (coiled === "partly") {
+      warnings.push({
+        level: "warn",
+        text: "This cable reel is only partly unwound. The turns still on the drum trap heat, so the safe load is lower (around " + Math.round(safeWatts) + " W here). Unwind it fully for a heavy load."
+      });
+    }
+
     // Daisy-chaining: everything downstream runs through the first lead's 13 A.
     if (daisyChained) {
       warnings.push({
@@ -168,6 +206,9 @@
     return {
       ratedWatts: ratedWatts,
       ratedAmps: leadAmps,
+      coiled: coiled,
+      safeWatts: safeWatts,
+      safeAmps: safeAmps,
       totalWatts: totalWatts,
       totalAmps: totalAmps,
       fraction: fraction,
