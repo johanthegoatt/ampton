@@ -97,3 +97,39 @@ test("an empty lead reads as zero with full headroom", () => {
   assert.strictEqual(r.status, "ok");
   assert.strictEqual(r.headroomAmps, r.ratedAmps);
 });
+
+test("a fully wound reel derates the safe limit to about a third", () => {
+  const r = A.assess({ items: [{ id: "heater" }], coiled: "fully" });
+  // 13 A reel ~2990 W unwound; fully wound safe ~0.33 of that ~987 W.
+  assert.ok(Math.abs(r.ratedWatts - 2990) < 1e-9, "plate rating is unchanged");
+  assert.ok(r.safeWatts < 1050 && r.safeWatts > 900, "wound safe near 1000 W");
+  // A 2000 W heater is fine unwound but over the wound limit.
+  assert.strictEqual(r.status, "over");
+  const danger = r.warnings.find((w) => w.level === "danger" && /wound/.test(w.text));
+  assert.ok(danger, "a fully wound reel raises a danger warning to unwind it");
+});
+
+test("the same heater on an unwound reel is within the limit", () => {
+  const r = A.assess({ items: [{ id: "heater" }], coiled: "unwound" });
+  assert.strictEqual(r.safeWatts, r.ratedWatts);
+  assert.strictEqual(r.status, "ok");
+});
+
+test("a reel's own printed wound rating overrides the default third", () => {
+  const r = A.assess({ items: [], coiled: "fully", woundWatts: 750 });
+  assert.strictEqual(r.safeWatts, 750);
+  assert.ok(Math.abs(r.safeAmps - 750 / 230) < 1e-9);
+});
+
+test("a partly wound reel warns but less severely than fully wound", () => {
+  const r = A.assess({ items: [{ id: "tv" }], coiled: "partly" });
+  assert.ok(r.safeWatts > r.ratedWatts * 0.33 && r.safeWatts < r.ratedWatts, "partly sits between");
+  const warn = r.warnings.find((w) => w.level === "warn" && /partly/.test(w.text));
+  assert.ok(warn, "partly wound raises a caution");
+});
+
+test("coiled defaults to off and leaves the full rating", () => {
+  const r = A.assess({ items: [{ id: "kettle" }] });
+  assert.strictEqual(r.coiled, "no");
+  assert.strictEqual(r.safeWatts, r.ratedWatts);
+});
