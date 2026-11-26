@@ -222,14 +222,58 @@
     };
   }
 
+  // Voltage drop down a long lead. The current-limit check above is about the
+  // lead overheating; this is the other long-lead problem. The thinner the wire
+  // and the longer the run, the more voltage is lost pushing the current there
+  // and back, so a heater on the end of a long thin reel runs weak and the lead
+  // warms along its whole length. The drop is the plain resistance sum: there
+  // and back is twice the length, over the conductor's cross-section.
+  //
+  //   drop (volts) = 2 x current x length x resistivity / cross-section
+  //
+  // Copper's resistivity is about 0.0175 ohm-mm^2 per metre near room
+  // temperature; a warm lead loses a little more, so treat this as an estimate
+  // on the low side. BS 7671 recommends the drop to a general load stays within
+  // 5% of the supply (about 11.5 V on 230 V); past that, shorten the lead, run
+  // it unwound, or use a thicker-cored one. Common UK flexible cords are 0.75,
+  // 1.0, 1.25 and 1.5 mm^2.
+  var RHO_CU = 0.0175;        // ohm-mm^2/m, copper near room temperature
+  var DROP_LIMIT_PCT = 5;     // BS 7671 recommendation for a general load
+
+  function voltageDrop(opts) {
+    opts = opts || {};
+    var volts = Number(opts.volts) > 0 ? Number(opts.volts) : MAINS_VOLTS;
+    var amps = Number(opts.amps);
+    if (!isFinite(amps) && isFinite(Number(opts.watts))) amps = wattsToAmps(Number(opts.watts), volts);
+    var lengthM = Number(opts.lengthM);
+    var csa = Number(opts.csa);
+    if (!(amps > 0) || !(lengthM > 0) || !(csa > 0)) return null;
+
+    var dropV = 2 * amps * lengthM * RHO_CU / csa;
+    var pct = dropV / volts * 100;
+    return {
+      amps: Math.round(amps * 100) / 100,
+      lengthM: lengthM,
+      csa: csa,
+      dropV: Math.round(dropV * 10) / 10,
+      atApplianceV: Math.round((volts - dropV) * 10) / 10,
+      percent: Math.round(pct * 10) / 10,
+      withinLimit: pct <= DROP_LIMIT_PCT,
+      limitPct: DROP_LIMIT_PCT
+    };
+  }
+
   return {
     MAINS_VOLTS: MAINS_VOLTS,
     SOCKET_AMPS: SOCKET_AMPS,
     PRESETS: PRESETS,
+    RHO_CU: RHO_CU,
+    DROP_LIMIT_PCT: DROP_LIMIT_PCT,
     wattsToAmps: wattsToAmps,
     ampsToWatts: ampsToWatts,
     presetWatts: presetWatts,
     itemWatts: itemWatts,
-    assess: assess
+    assess: assess,
+    voltageDrop: voltageDrop
   };
 });
