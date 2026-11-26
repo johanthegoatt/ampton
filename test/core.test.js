@@ -133,3 +133,38 @@ test("coiled defaults to off and leaves the full rating", () => {
   assert.strictEqual(r.coiled, "no");
   assert.strictEqual(r.safeWatts, r.ratedWatts);
 });
+
+test("voltageDrop: the plain resistance formula, there and back", () => {
+  // 2000 W at 230 V ~ 8.70 A, 20 m of 0.75 mm^2 copper.
+  const d = A.voltageDrop({ watts: 2000, volts: 230, lengthM: 20, csa: 0.75 });
+  // 2 * 8.696 * 20 * 0.0175 / 0.75 = 8.11 V
+  assert.ok(Math.abs(d.dropV - 8.1) < 0.2, "drop ~8.1 V, got " + d.dropV);
+  assert.ok(d.withinLimit, "8.1 V is under the 5% (~11.5 V) limit");
+  assert.strictEqual(d.atApplianceV, Math.round((230 - d.dropV) * 10) / 10);
+});
+
+test("voltageDrop: a long run on thin cable goes over the 5% limit", () => {
+  const d = A.voltageDrop({ watts: 2000, volts: 230, lengthM: 50, csa: 0.75 });
+  assert.ok(d.percent > 5);
+  assert.strictEqual(d.withinLimit, false);
+});
+
+test("voltageDrop: thicker cable drops less", () => {
+  const thin = A.voltageDrop({ amps: 10, volts: 230, lengthM: 25, csa: 0.75 });
+  const thick = A.voltageDrop({ amps: 10, volts: 230, lengthM: 25, csa: 1.5 });
+  assert.ok(thick.dropV < thin.dropV);
+  assert.ok(Math.abs(thin.dropV - 2 * thick.dropV) < 0.1, "half the cross-section, twice the drop");
+});
+
+test("voltageDrop accepts amps directly and defaults the voltage", () => {
+  const d = A.voltageDrop({ amps: 5, lengthM: 10, csa: 1.0 });
+  assert.strictEqual(d.amps, 5);
+  // 2 * 5 * 10 * 0.0175 / 1.0 = 1.75 V, shown to one decimal as 1.8.
+  assert.strictEqual(d.dropV, 1.8);
+});
+
+test("voltageDrop returns null on missing numbers", () => {
+  assert.strictEqual(A.voltageDrop({ amps: 5, lengthM: 10 }), null); // no csa
+  assert.strictEqual(A.voltageDrop({ lengthM: 10, csa: 1 }), null);  // no load
+  assert.strictEqual(A.voltageDrop({}), null);
+});
