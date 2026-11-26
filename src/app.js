@@ -12,6 +12,8 @@
   var leadEl = $("lead");
   var daisyEl = $("daisy");
   var reelEl = $("reel");
+  var lengthEl = $("length");
+  var csaEl = $("csa");
   var out = $("out");
   var emptyEl = $("empty");
 
@@ -128,6 +130,18 @@
       html += '<p class="warn warn--ok">Comfortable. Plenty of headroom on this lead.</p>';
     }
 
+    // Voltage drop down the lead, when a length and a cable thickness are given.
+    var vd = A.voltageDrop({ amps: r.totalAmps, lengthM: Number(lengthEl && lengthEl.value), csa: Number(csaEl && csaEl.value) });
+    if (vd) {
+      html += '<div class="drop drop--' + (vd.withinLimit ? "ok" : "warn") + '">' +
+        '<strong>Voltage drop:</strong> about ' + vd.dropV + ' V lost down ' + vd.lengthM + ' m of ' + vd.csa +
+        ' mm² cable (' + vd.percent + '% of the supply), leaving ~' + vd.atApplianceV + ' V at the appliance. ' +
+        (vd.withinLimit
+          ? 'Within the BS 7671 ' + vd.limitPct + '% guide.'
+          : 'Over the ' + vd.limitPct + '% guide — shorten the lead, unwind a reel, or use a thicker-cored one for a heavy load.') +
+        '</div>';
+    }
+
     out.innerHTML = html;
 
     if (window.Jack) {
@@ -181,6 +195,8 @@
   leadEl.addEventListener("change", compute);
   daisyEl.addEventListener("change", compute);
   if (reelEl) reelEl.addEventListener("change", compute);
+  if (lengthEl) lengthEl.addEventListener("input", compute);
+  if (csaEl) csaEl.addEventListener("change", compute);
   $("clear").addEventListener("click", function () { items = []; render(); });
 
   $("share").addEventListener("click", function () {

@@ -127,3 +127,11 @@ select:focus-visible, input:focus-visible, .btn:focus-visible, .jack:focus-visib
 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
 @keyframes wiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-9deg); } 75% { transform: rotate(9deg); } }
 @media (prefers-reduced-motion: reduce) { .jack.is-alarm, .jack.wiggle { animation: none; } .gauge__fill { transition: none; } }
+
+/* Voltage-drop panel. */
+.drop {
+  margin-top: 12px; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--card); font-size: .9rem; line-height: 1.5;
+}
+.drop--warn { border-color: color-mix(in srgb, var(--warn, #c0392b) 55%, var(--line)); }
+.drop--ok { border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }

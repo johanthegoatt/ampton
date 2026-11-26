@@ -41,6 +41,18 @@
         </select>
       </label>
       <label class="check"><input type="checkbox" id="daisy"> This lead is plugged into another lead</label>
+      <label class="field">Lead length <span class="opt">optional</span>
+        <span class="with-unit"><input type="number" id="length" min="0" step="1" inputmode="decimal" placeholder="e.g. 20"><span class="unit">m</span></span>
+      </label>
+      <label class="field">Cable thickness
+        <select id="csa">
+          <option value="">Don't know</option>
+          <option value="0.75">0.75 mm² (thin)</option>
+          <option value="1.0">1.0 mm²</option>
+          <option value="1.25">1.25 mm²</option>
+          <option value="1.5">1.5 mm² (thick)</option>
+        </select>
+      </label>
     </div>
 
     <div class="actions">
